@@ -1,0 +1,130 @@
+-- Вставка тестовых данных
+INSERT INTO Companies (CompanyName, TaxNumber, Website)
+VALUES 
+    ('ТехноПрогресс', '1234567890', 'www.technoprogress.com'),
+    ('Инновационные Решения', '0987654321', 'www.innosolutions.ru');
+
+-- Отделы
+INSERT INTO Departments (CompanyID, DepartmentName, Budget, Location)
+VALUES 
+    (1, 'Разработка', 500000.00, '3 этаж, офис 301'),
+    (1, 'Маркетинг', 300000.00, '2 этаж, офис 205'),
+    (2, 'Исследования', 400000.00, '1 этаж, офис 102');
+
+-- Должности
+INSERT INTO Positions (DepartmentID, Title, BaseSalary, IsManagement, Description)
+VALUES 
+    (1, 'Главный разработчик', 150000.00, 1, 'Руководитель команды разработки'),
+    (1, 'Старший разработчик', 120000.00, 0, 'Опытный разработчик'),
+    (1, 'Разработчик', 90000.00, 0, 'Разработчик ПО'),
+    (2, 'Маркетинг-менеджер', 110000.00, 1, 'Руководитель отдела маркетинга'),
+    (3, 'Ведущий исследователь', 130000.00, 1, 'Руководитель исследовательской группы');
+
+-- Обновляем руководителей отделов
+UPDATE Departments SET ManagerPositionID = 1 WHERE DepartmentID = 1;
+UPDATE Departments SET ManagerPositionID = 4 WHERE DepartmentID = 2;
+UPDATE Departments SET ManagerPositionID = 5 WHERE DepartmentID = 3;
+
+-- Сотрудники
+INSERT INTO Employees (FirstName, LastName, BirthDate, PositionID, Email, Phone)
+VALUES 
+    ('Иван', 'Иванов', '1985-05-15', 1, 'ivanov@technoprogress.com', '+79161234567'),
+    ('Петр', 'Петров', '1990-08-22', 2, 'petrov@technoprogress.com', '+79167654321'),
+    ('Анна', 'Сидорова', '1992-03-10', 3, 'sidorova@technoprogress.com', '+79169998877'),
+    ('Елена', 'Кузнецова', '1988-11-05', 4, 'kuznetsova@technoprogress.com', '+79162223344'),
+    ('Алексей', 'Смирнов', '1983-07-30', 5, 'smirnov@innosolutions.ru', '+79165556677');
+
+-- Пользователи системы
+INSERT INTO SystemUsers (EmployeeID, Username, PasswordHash)
+VALUES 
+    (1, 'iivanov', 'hashed_password_1'),
+    (2, 'ppetrov', 'hashed_password_2'),
+    (3, 'asidorova', 'hashed_password_3'),
+    (4, 'ekuznetsova', 'hashed_password_4'),
+    (5, 'asmirnov', 'hashed_password_5');
+
+-- Роли
+INSERT INTO Roles (RoleName, Description)
+VALUES 
+    ('Admin', 'Полный доступ к системе'),
+    ('Manager', 'Управление проектами и задачами'),
+    ('Developer', 'Доступ к задачам разработки'),
+    ('HR', 'Управление персоналом'),
+    ('Finance', 'Финансовые операции');
+
+-- Назначение ролей
+INSERT INTO UserRoles (UserID, RoleID)
+VALUES 
+    (1, 1), (1, 2),
+    (2, 3),
+    (3, 3),
+    (4, 2), (4, 4),
+    (5, 2), (5, 5);
+
+-- Проекты
+INSERT INTO Projects (CompanyID, ProjectName, Description, StartDate, EndDate, Budget, Status, ProjectManagerID)
+VALUES 
+    (1, 'Разработка CRM системы', 'Новая система управления клиентами', '2023-01-15', '2023-06-30', 2500000.00, 'In Progress', 1),
+    (1, 'Маркетинговая кампания', 'Продвижение нового продукта', '2023-02-01', '2023-03-31', 500000.00, 'Planning', 4),
+    (2, 'Исследование рынка', 'Анализ перспективных направлений', '2023-01-01', '2023-12-31', 800000.00, 'Active', 5);
+
+-- Задачи
+INSERT INTO Tasks (ProjectID, Title, Description, AssignedTo, CreatedBy, DueDate, Status, Priority, EstimatedHours)
+VALUES 
+    (1, 'Проектирование архитектуры', 'Разработать архитектуру CRM системы', 1, 1, '2023-02-15', 'In Progress', 'High', 40.00),
+    (1, 'Реализация модуля клиентов', 'Разработка основного функционала работы с клиентами', 2, 1, '2023-03-31', 'New', 'Medium', 80.00),
+    (1, 'Тестирование API', 'Проведение интеграционных тестов', 3, 1, '2023-05-15', 'New', 'Low', 60.00),
+    (2, 'Разработка креативной концепции', 'Создание концепции для рекламной кампании', NULL, 4, '2023-02-15', 'New', 'High', 30.00),
+    (3, 'Анализ конкурентов', 'Сбор и анализ данных по основным конкурентам', 5, 5, '2023-03-01', 'Completed', 'Medium', 50.00);
+
+-- Учет рабочего времени
+INSERT INTO WorkLogs (EmployeeID, TaskID, LogDate, HoursWorked, Description, IsApproved, ApprovedBy)
+VALUES 
+    (1, 1, '2023-01-16', 8.00, 'Проектирование архитектуры', 1, 1),
+    (1, 1, '2023-01-17', 6.50, 'Доработка архитектуры', 1, 1),
+    (2, NULL, '2023-01-16', 7.00, 'Изучение требований', 1, 1),
+    (5, 5, '2023-01-15', 8.00, 'Сбор данных по конкурентам', 1, 5);
+
+-- Зарплаты
+INSERT INTO Salaries (EmployeeID, BaseAmount, BonusAmount, TaxAmount, PaymentDate, PeriodStart, PeriodEnd, IsPaid, PaymentMethod)
+VALUES 
+    (1, 150000.00, 20000.00, 22100.00, '2023-01-10', '2022-12-01', '2022-12-31', 1, 'Bank Transfer'),
+    (2, 120000.00, 15000.00, 17550.00, '2023-01-10', '2022-12-01', '2022-12-31', 1, 'Bank Transfer'),
+    (3, 90000.00, 10000.00, 13000.00, '2023-01-10', '2022-12-01', '2022-12-31', 1, 'Bank Transfer');
+
+-- Документы
+INSERT INTO Documents (DocumentType, Title, Description, FilePath, UploadedBy, RelatedProjectID, RelatedTaskID)
+VALUES 
+    ('Technical', 'Требования к CRM', 'Функциональные требования', 'docscrmrequirements.pdf', 1, 1, NULL),
+    ('Design', 'Архитектура системы', 'Диаграммы архитектуры', 'docscrmarchitecture.pdf', 1, 1, 1),
+    ('Report', 'Отчет по конкурентам', 'Предварительные результаты', 'docsmarketresearch.pdf', 5, 3, 5);
+
+-- Навыки
+INSERT INTO Skills (SkillName, Category, Description)
+VALUES 
+    ('C#', 'Programming', 'Язык программирования C#'),
+    ('ASP.NET Core', 'Web Development', 'Фреймворк для веб-разработки'),
+    ('SQL', 'Database', 'Язык запросов к базам данных'),
+    ('Project Management', 'Management', 'Управление проектами'),
+    ('Market Research', 'Analysis', 'Исследование рынка');
+
+-- Навыки сотрудников
+INSERT INTO EmployeeSkills (EmployeeID, SkillID, ProficiencyLevel, AcquiredDate)
+VALUES 
+    (1, 1, 'Expert', '2015-01-01'),
+    (1, 2, 'Advanced', '2016-01-01'),
+    (1, 3, 'Advanced', '2015-01-01'),
+    (1, 4, 'Intermediate', '2018-01-01'),
+    (2, 1, 'Advanced', '2017-01-01'),
+    (2, 2, 'Intermediate', '2018-01-01'),
+    (3, 1, 'Intermediate', '2019-01-01'),
+    (5, 3, 'Intermediate', '2016-01-01'),
+    (5, 5, 'Expert', '2010-01-01');
+
+-- Оборудование
+INSERT INTO Equipment (EquipmentType, Model, SerialNumber, PurchaseDate, PurchaseCost, AssignedTo, AssignedDate, Status, WarrantyExpiry)
+VALUES 
+    ('Laptop', 'Dell XPS 15', 'DLXPS12345', '2022-01-15', 150000.00, 1, '2022-01-20', 'In Use', '2024-01-15'),
+    ('Laptop', 'MacBook Pro 16', 'MBP1656789', '2022-03-10', 180000.00, 2, '2022-03-15', 'In Use', '2024-03-10'),
+    ('Monitor', 'Dell 27 4K', 'DLU271234', '2022-05-01', 45000.00, NULL, NULL, 'Available', '2024-05-01'),
+    ('Phone', 'iPhone 14 Pro', 'IP14P5678', '2022-09-20', 100000.00, 4, '2022-09-25', 'In Use', '2024-09-20');

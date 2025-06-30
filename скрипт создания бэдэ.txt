@@ -1,0 +1,193 @@
+CREATE DATABASE CompanyManagementSystem;
+GO
+
+USE CompanyManagementSystem;
+GO
+
+-- 1. Таблица компаний (основная сущность)
+CREATE TABLE Companies (
+    CompanyID INT PRIMARY KEY IDENTITY(1,1),
+    CompanyName NVARCHAR(100) NOT NULL,
+    TaxNumber NVARCHAR(20) UNIQUE NOT NULL,
+    RegistrationDate DATE DEFAULT GETDATE(),
+    Website NVARCHAR(100),
+    IsActive BIT DEFAULT 1
+);
+
+-- 2. Таблица отделов
+CREATE TABLE Departments (
+    DepartmentID INT PRIMARY KEY IDENTITY(1,1),
+    CompanyID INT NOT NULL FOREIGN KEY REFERENCES Companies(CompanyID),
+    DepartmentName NVARCHAR(50) NOT NULL,
+    Budget DECIMAL(18,2),
+    Location NVARCHAR(100),
+    ManagerPositionID INT NULL -- Ссылка на позицию руководителя
+);
+
+-- 3. Таблица должностей
+CREATE TABLE Positions (
+    PositionID INT PRIMARY KEY IDENTITY(1,1),
+    DepartmentID INT NOT NULL FOREIGN KEY REFERENCES Departments(DepartmentID),
+    Title NVARCHAR(50) NOT NULL,
+    BaseSalary DECIMAL(18,2) NOT NULL,
+    IsManagement BIT DEFAULT 0,
+    Description NVARCHAR(500)
+);
+
+-- Добавляем внешний ключ для руководителя отдела
+ALTER TABLE Departments ADD CONSTRAINT FK_Departments_ManagerPosition 
+FOREIGN KEY (ManagerPositionID) REFERENCES Positions(PositionID);
+
+-- 4. Таблица сотрудников
+CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY IDENTITY(1,1),
+    FirstName NVARCHAR(50) NOT NULL,
+    LastName NVARCHAR(50) NOT NULL,
+    BirthDate DATE,
+    PositionID INT NOT NULL FOREIGN KEY REFERENCES Positions(PositionID),
+    HireDate DATE DEFAULT GETDATE(),
+    Email NVARCHAR(100) UNIQUE,
+    Phone NVARCHAR(20),
+    Address NVARCHAR(200),
+    IsActive BIT DEFAULT 1,
+    CONSTRAINT CHK_EmployeeAge CHECK (DATEDIFF(YEAR, BirthDate, GETDATE()) >= 18)
+);
+
+-- 5. Таблица пользователей системы
+CREATE TABLE SystemUsers (
+    UserID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT UNIQUE FOREIGN KEY REFERENCES Employees(EmployeeID),
+    Username NVARCHAR(50) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    LastLogin DATETIME,
+    IsLocked BIT DEFAULT 0,
+    FailedAttempts INT DEFAULT 0
+);
+
+-- 6. Таблица ролей
+CREATE TABLE Roles (
+    RoleID INT PRIMARY KEY IDENTITY(1,1),
+    RoleName NVARCHAR(50) NOT NULL,
+    Description NVARCHAR(200)
+);
+
+-- 7. Таблица назначения ролей пользователям
+CREATE TABLE UserRoles (
+    UserRoleID INT PRIMARY KEY IDENTITY(1,1),
+    UserID INT NOT NULL FOREIGN KEY REFERENCES SystemUsers(UserID),
+    RoleID INT NOT NULL FOREIGN KEY REFERENCES Roles(RoleID),
+    AssignedDate DATETIME DEFAULT GETDATE(),
+    CONSTRAINT UQ_UserRole UNIQUE (UserID, RoleID)
+);
+
+-- 8. Таблица проектов
+CREATE TABLE Projects (
+    ProjectID INT PRIMARY KEY IDENTITY(1,1),
+    CompanyID INT NOT NULL FOREIGN KEY REFERENCES Companies(CompanyID),
+    ProjectName NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(MAX),
+    StartDate DATE,
+    EndDate DATE,
+    Budget DECIMAL(18,2),
+    Status NVARCHAR(20) DEFAULT 'Planning',
+    ProjectManagerID INT FOREIGN KEY REFERENCES Employees(EmployeeID)
+);
+
+-- 9. Таблица задач
+CREATE TABLE Tasks (
+    TaskID INT PRIMARY KEY IDENTITY(1,1),
+    ProjectID INT NOT NULL FOREIGN KEY REFERENCES Projects(ProjectID),
+    Title NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(MAX),
+    AssignedTo INT FOREIGN KEY REFERENCES Employees(EmployeeID),
+    CreatedBy INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
+    CreatedDate DATETIME DEFAULT GETDATE(),
+    DueDate DATE,
+    Status NVARCHAR(20) DEFAULT 'New',
+    Priority NVARCHAR(10) DEFAULT 'Medium',
+    EstimatedHours DECIMAL(5,2)
+);
+
+-- 10. Таблица рабочего времени
+CREATE TABLE WorkLogs (
+    WorkLogID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
+    TaskID INT FOREIGN KEY REFERENCES Tasks(TaskID),
+    LogDate DATE NOT NULL,
+    HoursWorked DECIMAL(4,2) NOT NULL,
+    Description NVARCHAR(500),
+    IsApproved BIT DEFAULT 0,
+    ApprovedBy INT FOREIGN KEY REFERENCES Employees(EmployeeID),
+    CONSTRAINT CHK_HoursWorked CHECK (HoursWorked > 0 AND HoursWorked <= 24)
+);
+
+-- 11. Таблица зарплат
+CREATE TABLE Salaries (
+    SalaryID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
+    BaseAmount DECIMAL(18,2) NOT NULL,
+    BonusAmount DECIMAL(18,2) DEFAULT 0,
+    TaxAmount DECIMAL(18,2) DEFAULT 0,
+    PaymentDate DATE NOT NULL,
+    PeriodStart DATE NOT NULL,
+    PeriodEnd DATE NOT NULL,
+    IsPaid BIT DEFAULT 0,
+    PaymentMethod NVARCHAR(20),
+    CONSTRAINT CHK_Period CHECK (PeriodEnd >= PeriodStart)
+);
+
+-- 12. Таблица документов
+CREATE TABLE Documents (
+    DocumentID INT PRIMARY KEY IDENTITY(1,1),
+    DocumentType NVARCHAR(50) NOT NULL,
+    Title NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(500),
+    FilePath NVARCHAR(255) NOT NULL,
+    UploadedBy INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
+    UploadDate DATETIME DEFAULT GETDATE(),
+    RelatedProjectID INT FOREIGN KEY REFERENCES Projects(ProjectID),
+    RelatedTaskID INT FOREIGN KEY REFERENCES Tasks(TaskID),
+    IsConfidential BIT DEFAULT 0
+);
+
+-- 13. Таблица навыков
+CREATE TABLE Skills (
+    SkillID INT PRIMARY KEY IDENTITY(1,1),
+    SkillName NVARCHAR(50) NOT NULL,
+    Category NVARCHAR(50),
+    Description NVARCHAR(200)
+);
+
+-- 14. Таблица навыков сотрудников
+CREATE TABLE EmployeeSkills (
+    EmployeeSkillID INT PRIMARY KEY IDENTITY(1,1),
+    EmployeeID INT NOT NULL FOREIGN KEY REFERENCES Employees(EmployeeID),
+    SkillID INT NOT NULL FOREIGN KEY REFERENCES Skills(SkillID),
+    ProficiencyLevel NVARCHAR(20),
+    AcquiredDate DATE,
+    CONSTRAINT UQ_EmployeeSkill UNIQUE (EmployeeID, SkillID)
+);
+
+-- 15. Таблица учета оборудования
+CREATE TABLE Equipment (
+    EquipmentID INT PRIMARY KEY IDENTITY(1,1),
+    EquipmentType NVARCHAR(50) NOT NULL,
+    Model NVARCHAR(100),
+    SerialNumber NVARCHAR(50) UNIQUE,
+    PurchaseDate DATE,
+    PurchaseCost DECIMAL(18,2),
+    AssignedTo INT FOREIGN KEY REFERENCES Employees(EmployeeID),
+    AssignedDate DATE,
+    Status NVARCHAR(20) DEFAULT 'Available',
+    Location NVARCHAR(100),
+    WarrantyExpiry DATE
+);
+
+-- Создание индексов для улучшения производительности
+CREATE INDEX IX_Employees_PositionID ON Employees(PositionID);
+CREATE INDEX IX_Tasks_ProjectID ON Tasks(ProjectID);
+CREATE INDEX IX_Tasks_AssignedTo ON Tasks(AssignedTo);
+CREATE INDEX IX_WorkLogs_EmployeeID ON WorkLogs(EmployeeID);
+CREATE INDEX IX_WorkLogs_TaskID ON WorkLogs(TaskID);
+CREATE INDEX IX_Salaries_EmployeeID ON Salaries(EmployeeID);
+CREATE INDEX IX_Documents_UploadedBy ON Documents(UploadedBy);
